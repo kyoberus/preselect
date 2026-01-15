@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
 import { 
   Box, 
   Button, 
@@ -11,22 +13,70 @@ import {
   IconButton,
   Card,
   CardContent,
-  useTheme
+  useTheme,
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import { Visibility, VisibilityOff, Person, Lock } from '@mui/icons-material';
+import { useSnackbar } from '@/contexts/SnackbarContext';
 
 export default function LoginPage() {
-  const theme = useTheme(); // เรียกใช้ Theme เพื่อดึงค่าสีมาทำ Gradient
+  const theme = useTheme();
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
+
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
-  const handleLogin = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // TODO: ใส่ Logic เชื่อมต่อ API ตรงนี้
-    console.log("Login with:", { username, password });
+    setError('');
+    setLoading(true);
+
+    try {
+      // 1. เรียกไปที่ Internal API Route (/api/login)
+      // เราส่ง username ไปตามปกติ เดี๋ยว route.ts จะแปลงเป็น email ให้เอง
+      const res = await fetch('/api/login', {  
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username, // ส่ง username (API Route จะ map เป็น email)
+          password: password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // รับ Error message ที่ส่งมาจาก API Route (ซึ่ง API Route รับมาจาก Backend อีกที)
+        // Backend อาจส่งมาเป็น { message: "..." } หรือ { detail: "..." }
+        throw new Error(data.message || data.detail || 'Login failed');
+      }
+
+      // 2. Login สำเร็จ -> เก็บ Token
+      if (data.access_token) {
+        Cookies.set('token', data.access_token, { expires: 1 });
+
+        showSnackbar('Login Successful! Welcome back.', 'success');
+        // ย้ายหน้าไป Dashboard
+        router.push('/');
+      } else {
+        throw new Error('Token not found in response');
+      }
+
+    } catch (err: any) {
+      showSnackbar(err.message || 'Login failed', 'error'); 
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -36,15 +86,13 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        // ใช้สีจาก Theme (background.default)
         backgroundColor: 'background.default',
-        // Gradient สวยๆ โดยดึงสี Primary มาผสมจางๆ
         backgroundImage: `radial-gradient(circle at 50% 10%, #fff 0%, ${theme.palette.background.default} 100%)`,
       }}
     >
-      <Container maxWidth="xs"> {/* ปรับความกว้างให้กระชับ (xs = extra small) */}
+      <Container maxWidth="xs">
         <Card 
-          elevation={0} // เอาเงา Default ออก แล้วใส่เงาเองให้ดูนุ่มนวล
+          elevation={0} 
           sx={{ 
             borderRadius: 4, 
             p: 3,
@@ -55,28 +103,20 @@ export default function LoginPage() {
         >
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             
-            {/* --- Logo Section (CSS Pure) --- */}
+            {/* Logo Section */}
             <Box sx={{ textAlign: 'center', mb: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mb: 2 }}>
-                {/* ตัว P ใหญ่ */}
                 <Box
                   sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: '50%',
-                    bgcolor: 'primary.main', // ใช้สีกลาง
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: '2rem',
-                    boxShadow: `0 8px 16px ${theme.palette.primary.main}40` // เงาสีส้มแดงจางๆ
+                    width: 56, height: 56, borderRadius: '50%',
+                    bgcolor: 'primary.main', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '2rem',
+                    boxShadow: `0 8px 16px ${theme.palette.primary.main}40`
                   }}
                 >
                   P
                 </Box>
-                {/* จุด 3 สี */}
+                {/* 3 Dots */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'secondary.main' }} />
                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'success.main' }} />
@@ -92,16 +132,21 @@ export default function LoginPage() {
               </Typography>
             </Box>
 
-            {/* --- Form Section --- */}
+            {/* Error Message */}
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+            )}
+
+            {/* Form Section */}
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               
-              {/* Username Input */}
               <TextField
                 fullWidth
-                label="Username / Email"
+                label="Username / Email" // เปลี่ยน Label ให้ชัดเจนขึ้นว่าใส่ Email ก็ได้
                 variant="outlined"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                disabled={loading}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -111,7 +156,6 @@ export default function LoginPage() {
                 }}
               />
 
-              {/* Password Input */}
               <Box>
                 <TextField
                     fullWidth
@@ -120,6 +164,7 @@ export default function LoginPage() {
                     variant="outlined"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
                     InputProps={{
                     startAdornment: (
                         <InputAdornment position="start">
@@ -141,31 +186,25 @@ export default function LoginPage() {
                 />
               </Box>
 
-              {/* Submit Button */}
               <Button 
                 type="submit" 
                 fullWidth 
                 variant="contained" 
-                color="primary" // MUI จะใช้สี #FF5A5F ให้อัตโนมัติ
+                color="primary"
                 size="large"
+                disabled={loading || !username || !password}
                 sx={{ 
                   height: 48,
                   fontSize: '1rem',
                   boxShadow: `0 8px 20px ${theme.palette.primary.main}40`,
                 }}
               >
-                Sign In
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
               </Button>
 
             </form>
           </CardContent>
         </Card>
-        
-        {/* Footer Text */}
-        <Typography variant="caption" display="block" align="center" color="text.secondary" sx={{ mt: 4 }}>
-            © 2026 Preselect Co., Ltd. All rights reserved.
-        </Typography>
-
       </Container>
     </Box>
   );

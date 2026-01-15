@@ -23,6 +23,9 @@ import {
   Business as CompanyIcon
 } from '@mui/icons-material';
 import LogoImage from '@/assets/Logo.jpg';
+import Cookies from 'js-cookie'; // Import เพิ่ม
+import { useRouter } from 'next/navigation'; // Import เพิ่ม
+import { useSnackbar } from '@/contexts/SnackbarContext';
 
 interface SidebarProps {
   drawerWidth: number;
@@ -38,8 +41,16 @@ const MENU_ITEMS = [
 ];
 
 export default function Sidebar({ drawerWidth, mobileOpen, onClose }: SidebarProps) {
+  const router = useRouter(); // เรียกใช้
+  const { showSnackbar } = useSnackbar();
   const theme = useTheme();
   const pathname = usePathname();
+
+  const handleLogout = () => {
+    Cookies.remove('token'); // ลบ Token
+    showSnackbar('Logout Successful! See you again.', 'success');
+    router.push('/login'); // ย้ายไปหน้า Login
+  };
 
   const drawerContent = (
     <div>
@@ -97,8 +108,9 @@ export default function Sidebar({ drawerWidth, mobileOpen, onClose }: SidebarPro
       </List>
 
       <Box sx={{ flexGrow: 1 }} />
-      <Box sx={{ p: 2, mt: 'auto' }}> {/* mt: auto เพื่อดันไปล่างสุดจริงๆ */}
+      <Box sx={{ p: 2, mt: 'auto' }}>
         <ListItemButton 
+            onClick={handleLogout} // ใส่ onClick ตรงนี้
             sx={{ 
                 borderRadius: 2, 
                 color: 'error.main',

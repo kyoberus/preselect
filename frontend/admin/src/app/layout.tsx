@@ -4,7 +4,8 @@ import type { Metadata } from 'next';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import theme from '../theme'; // import ไฟล์ theme ที่เราสร้าง
+import theme from '../theme';
+import { SnackbarProvider } from '@/contexts/SnackbarContext'; // <--- Import มา
 
 export const metadata: Metadata = {
   title: 'Preselect Dashboard',
@@ -22,7 +23,10 @@ export default function RootLayout({
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
             <CssBaseline />
-            {children}
+            {/* ครอบด้วย SnackbarProvider */}
+            <SnackbarProvider> 
+              {children}
+            </SnackbarProvider>
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>

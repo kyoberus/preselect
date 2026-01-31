@@ -4,26 +4,26 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { 
-  Box, 
-  Drawer, 
-  List, 
-  ListItem, 
-  ListItemButton, 
-  ListItemIcon, 
-  ListItemText, 
+import {
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
   Divider,
   useTheme
 } from '@mui/material';
-import { 
-  Dashboard as DashboardIcon, 
-  People as PeopleIcon, 
+import {
+  Dashboard as DashboardIcon,
+  People as PeopleIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   Business as CompanyIcon
 } from '@mui/icons-material';
 import LogoImage from '@/assets/Logo.jpg';
-import Cookies from 'js-cookie'; // Import เพิ่ม
+import { logout } from '@/services/authen.service';
 import { useRouter } from 'next/navigation'; // Import เพิ่ม
 import { useSnackbar } from '@/contexts/SnackbarContext';
 
@@ -36,7 +36,7 @@ interface SidebarProps {
 const MENU_ITEMS = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'Company', icon: <CompanyIcon />, path: '/company' },
-  { text: 'Users', icon: <PeopleIcon />, path: '/users' },
+  { text: 'Admin Management', icon: <PeopleIcon />, path: '/admin-management' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
@@ -46,21 +46,21 @@ export default function Sidebar({ drawerWidth, mobileOpen, onClose }: SidebarPro
   const theme = useTheme();
   const pathname = usePathname();
 
-  const handleLogout = () => {
-    Cookies.remove('token'); // ลบ Token
+  const handleLogout = async () => {
+    await logout(); // Call server action to delete cookie
     showSnackbar('Logout Successful! See you again.', 'success');
-    router.push('/login'); // ย้ายไปหน้า Login
+    router.push('/login');
   };
 
   const drawerContent = (
     <div>
-       <Box 
-        sx={{ 
-          p: 3, 
-          display: 'flex', 
-          alignItems: 'center', 
+      <Box
+        sx={{
+          p: 3,
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'flex-start',
-          height: 80 
+          height: 80
         }}
       >
         <Image
@@ -77,50 +77,50 @@ export default function Sidebar({ drawerWidth, mobileOpen, onClose }: SidebarPro
 
       <List>
         {MENU_ITEMS.map((item) => {
-            const active = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
+          const active = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
 
-            return (
-              <ListItem key={item.text} disablePadding sx={{ px: 2, mb: 1 }}>
-                <Link href={item.path} passHref style={{ textDecoration: 'none', width: '100%' }}>
-                    <ListItemButton
-                      selected={active}
-                      onClick={onClose} // เพิ่ม: กดแล้วให้ปิด Drawer (สำหรับ Mobile)
-                      sx={{
-                        borderRadius: 2,
-                        '&.Mui-selected': {
-                          bgcolor: `${theme.palette.primary.main}15`,
-                          color: 'primary.main',
-                          '&:hover': { bgcolor: `${theme.palette.primary.main}25` },
-                          '& .MuiListItemIcon-root': { color: 'primary.main' },
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
-                      <ListItemText 
-                        primary={item.text} 
-                        primaryTypographyProps={{ fontWeight: active ? 600 : 400 }}
-                      />
-                    </ListItemButton>
-                </Link>
-              </ListItem>
-            );
+          return (
+            <ListItem key={item.text} disablePadding sx={{ px: 2, mb: 1 }}>
+              <Link href={item.path} passHref style={{ textDecoration: 'none', width: '100%' }}>
+                <ListItemButton
+                  selected={active}
+                  onClick={onClose} // เพิ่ม: กดแล้วให้ปิด Drawer (สำหรับ Mobile)
+                  sx={{
+                    borderRadius: 2,
+                    '&.Mui-selected': {
+                      bgcolor: `${theme.palette.primary.main}15`,
+                      color: 'primary.main',
+                      '&:hover': { bgcolor: `${theme.palette.primary.main}25` },
+                      '& .MuiListItemIcon-root': { color: 'primary.main' },
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+                  <ListItemText
+                    primary={item.text}
+                    primaryTypographyProps={{ fontWeight: active ? 600 : 400 }}
+                  />
+                </ListItemButton>
+              </Link>
+            </ListItem>
+          );
         })}
       </List>
 
       <Box sx={{ flexGrow: 1 }} />
       <Box sx={{ p: 2, mt: 'auto' }}>
-        <ListItemButton 
-            onClick={handleLogout} // ใส่ onClick ตรงนี้
-            sx={{ 
-                borderRadius: 2, 
-                color: 'error.main',
-                '&:hover': { bgcolor: 'error.lighter' } 
-            }}
+        <ListItemButton
+          onClick={handleLogout} // ใส่ onClick ตรงนี้
+          sx={{
+            borderRadius: 2,
+            color: 'error.main',
+            '&:hover': { bgcolor: 'error.lighter' }
+          }}
         >
-            <ListItemIcon sx={{ minWidth: 40, color: 'error.main' }}>
-                <LogoutIcon />
-            </ListItemIcon>
-            <ListItemText primary="Logout" />
+          <ListItemIcon sx={{ minWidth: 40, color: 'error.main' }}>
+            <LogoutIcon />
+          </ListItemIcon>
+          <ListItemText primary="Logout" />
         </ListItemButton>
       </Box>
     </div>
@@ -139,9 +139,9 @@ export default function Sidebar({ drawerWidth, mobileOpen, onClose }: SidebarPro
         ModalProps={{ keepMounted: true }} // เพื่อประสิทธิภาพใน Mobile
         sx={{
           display: { xs: 'block', md: 'none' }, // โชว์เฉพาะ Mobile
-          '& .MuiDrawer-paper': { 
-            boxSizing: 'border-box', 
-            width: drawerWidth 
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: drawerWidth
           },
         }}
       >
@@ -153,8 +153,8 @@ export default function Sidebar({ drawerWidth, mobileOpen, onClose }: SidebarPro
         variant="permanent"
         sx={{
           display: { xs: 'none', md: 'block' }, // ซ่อนใน Mobile
-          '& .MuiDrawer-paper': { 
-            boxSizing: 'border-box', 
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
             width: drawerWidth,
             borderRight: '1px solid',
             borderColor: 'divider',

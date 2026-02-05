@@ -8,6 +8,17 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+# Config CORS
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Register Router
 app.include_router(api_router)
 

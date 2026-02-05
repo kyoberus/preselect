@@ -15,6 +15,7 @@ export const AUTH_403 = 403;
 export const NUMBER_REGEX = /^[0-9]+$/;
 export const EMAIL_REGEX =
     /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d\w\W]{8,}$/;
 
 export const SESSION_TIMEOUT = "Session timeout. Please login again.";
 

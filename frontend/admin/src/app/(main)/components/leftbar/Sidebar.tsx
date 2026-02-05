@@ -20,7 +20,8 @@ import {
   People as PeopleIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
-  Business as CompanyIcon
+  Business as CompanyIcon,
+  Forklift as ForkliftIcon
 } from '@mui/icons-material';
 import LogoImage from '@/assets/Logo.jpg';
 import { logout } from '@/services/authen.service';
@@ -36,6 +37,7 @@ interface SidebarProps {
 const MENU_ITEMS = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'Company', icon: <CompanyIcon />, path: '/company' },
+  { text: 'Forklift Management', icon: <ForkliftIcon />, path: '/forklift-management' },
   { text: 'Admin Management', icon: <PeopleIcon />, path: '/admin-management' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
